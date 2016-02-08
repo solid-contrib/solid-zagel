@@ -1,0 +1,55 @@
+header {
+  margin-bottom: 30px;
+  margin-top: 0px;
+}
+
+.float-right {
+    float: right;
+}
+
+.float-left {
+    float: left;
+}
+
+.center-text {
+    text-align: center;
+}
+
+.center-content {
+  position: relative;
+  width: 50%;
+  left: 25%;
+}
+
+.center {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.hidden {
+    display: none!important;
+}
+
+.content {
+  position: relative;
+  width: 70%;
+  left: 15%;
+  text-align: center;
+}
+
+footer {
+  margin-top: 40px;
+  padding-bottom: 10px;
+}
+
+/* RESPONSIVE */
+@media (min-width: 48em) {
+
+}
+
+@media (max-width: 48em) {
+    body {
+        zoom: 80%;
+    }
+}
