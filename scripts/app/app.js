@@ -1,16 +1,20 @@
-var app = angular.module('GalleryApp', ['ngRoute']);
+var app = angular.module('ZagelChatApp', ['ngRoute']);
 
 app.config(function ($routeProvider) {
   $routeProvider
     .when('/', {
-      controller: "HomeController",
-      templateUrl: "views/home.html"
+      controller: "SigninController",
+      templateUrl: "views/signin.html"
     })
-    .when('/photos/:id', {
-      controller: 'PhotoController',
-      templateUrl: 'views/photo.html'
+    .when('/signin', {
+     templateUrl: "views/signin.html",
+     controller: "SigninController"
     })
-    .otherwise({
-      redirectTo: '/'
+    .when('/chathome', {
+      templateUrl: "views/chathome.html",
+      controller: "HomeController"
     });
+    // .otherwise({
+    //   redirectTo: '/'
+    // });
 });

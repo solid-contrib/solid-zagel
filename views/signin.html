@@ -1,8 +1,8 @@
-<div class="center-text" id="signin">
-	<br>
+<div class="center-text" id="signin" ng-controller="SigninController">
+	<br/>
 	<div class="">
-		<a href="#" class="btn btn-primary btn-lg btn-block">Sign in</a>
-		<hr>
-		<a href="#" class="btn btn-success btn-lg btn-block">Sign up</a>
+		<a href="" ng-click="signinCallback()" class="btn btn-primary btn-lg btn-block">{{ signinText }}</a>
+		<hr/>
+		<a href="" ng-click="signupCallback()" class="btn btn-success btn-lg btn-block">{{ signupText }}</a>
 	</div>
 </div>
