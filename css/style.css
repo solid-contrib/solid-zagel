@@ -1,6 +1,20 @@
 header {
   margin-bottom: 30px;
   margin-top: 0px;
+  height: 100px;
+  width: 100%;
+}
+
+footer {
+  margin-top: 40px;
+  padding-bottom: 10px;
+  height: 50px;
+  width: 100%;
+}
+
+.fillImage {
+  width: 100%;
+  height: 100%;
 }
 
 .float-right {
@@ -17,8 +31,9 @@ header {
 
 .center-content {
   position: relative;
-  width: 50%;
-  left: 25%;
+  width: 70%;
+  left: 15%;
+  text-align: center;
 }
 
 .center {
@@ -35,12 +50,39 @@ header {
   position: relative;
   width: 70%;
   left: 15%;
-  text-align: center;
 }
 
-footer {
-  margin-top: 40px;
-  padding-bottom: 10px;
+.textSizeBig {
+  font-size: xlarge;
+  color: #C6BCBC;
+}
+
+.fixNavBar {
+  margin-bottom: 0px;
+  width: 100%;
+}
+
+.profileImage {
+  max-width: 150px;
+  max-height: 150px;
+}
+
+.fixedFooter {
+  position: fixed;
+  bottom: 0px;
+  left: 300px;
+  right: 0px;
+}
+
+.fixTextInput {
+  display: inline;
+  width: calc(100% - 120px);
+  margin-right: 10px;
+}
+
+.fixButton {
+  display: inline;
+  min-width: 100px;
 }
 
 /* RESPONSIVE */

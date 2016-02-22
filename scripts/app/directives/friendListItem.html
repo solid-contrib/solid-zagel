@@ -1,0 +1,9 @@
+<a class="hvr-fade" href="" ng-click="parentCallback({webid: friend.webid})">
+	<img class="friendIcon" ng-src="{{ friend.avatar }}"> 
+	<div class="friendInfo">
+		<p class="friendName">{{ friend.name }}</p> 
+		<p class="friendStatus">{{ friend.status }}</p>
+	</div>
+	<div class="badge">{{ friend.notifications }}</div>
+</a>
+<input type="hidden" ng-model="friend.webid" value="{{ friend.webid }}"/>

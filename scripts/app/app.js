@@ -12,7 +12,7 @@ app.config(function ($routeProvider) {
     })
     .when('/chathome', {
       templateUrl: "views/chathome.html",
-      controller: "HomeController"
+      controller: "ChathomeController"
     });
     // .otherwise({
     //   redirectTo: '/'

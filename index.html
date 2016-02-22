@@ -4,43 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
     <title>Solid Chat</title>
-    <link rel="stylesheet" href="css/bootstrap.css">
-    <link rel="stylesheet" href="css/custom.min.css">
+    <link rel="stylesheet" href="css/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="css/bootstrap/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="css/simple-sidebar.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="shortcut icon" type="img/png" href="favicon.png">
+    <link rel="stylesheet" href="css/friendListItem.css">
+    <link rel="stylesheet" href="css/hover.css">
+    <link rel="stylesheet" href="css/spinner.css">
+    <link rel="stylesheet" href="css/chat-panel.css">
 
-    <!-- Include the core AngularJS library -->
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.5/angular.min.js"></script>
-    
-    <!-- Include the AngularJS routing library -->
-    <script src="https://code.angularjs.org/1.2.28/angular-route.min.js"></script>
+    <link rel="shortcut icon" type="img/png" href="favicon.png">
 
 </head>
 
 <body ng-app="ZagelChatApp">
-	<header>
-		<div class="center-text">
-			<img src="img/solid-chat-logo.png"/>
-		</div>
-	</header>
 
-	<div ng-view class="content"></div>
+	<div ng-view></div>
 
-    <footer>
-        <div class="center-text"><a href="https://github.com/solid/solid-spec" target="_blank">Solid Specs</a> | <a href="https://docs.google.com/document/d/1MX0kxdNZGY3P33dCWK71sSEcc4ZdcaMSoVTEf4pqMhY/edit" target="_blank">Solid Chat Specs</a></div>
-    </footer>
 
+    <!-- scripts -->
     <script src="scripts/vendor/rdflib.min.js"></script>
     <script src="scripts/vendor/solid.min.js"></script>
 
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>-->
+    <script src="scripts/vendor/jquery.min.js"></script>
+    <script src="scripts/vendor/sha256.js"></script>
+    <script src="scripts/vendor/jquery-bigtext/jquery-bigtext.js"></script>
+    <!-- Include bootstrap scripts -->
+    <script src="css/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Include the core AngularJS library -->
+    <script src="scripts/vendor/angularjs/angular.min.js"></script>
+    <!--<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.5/angular.min.js"></script>-->
+    
+    <!-- Include the AngularJS routing library -->
+    <script src="scripts/vendor/angularjs/angular-route.min.js"></script>
+    <!--<script src="https://code.angularjs.org/1.2.28/angular-route.min.js"></script>-->
+
     <!-- Modules -->
+    <script src="scripts/app/utilities.js"></script>
+    <script src="scripts/app/podHandler.js"></script>
+    <script src="scripts/app/chatHandler.js"></script>
     <script src="scripts/app/app.js"></script>
 
     <!-- Controllers -->
     <script src="scripts/app/controllers/SigninController.js"></script>
-    <script src="scripts/app/controllers/HomeController.js"></script>
+    <script src="scripts/app/controllers/ChathomeController.js"></script>
+
+    <!-- Directives -->
+    <script src="scripts/app/directives/friendListItem.js"></script>
+    <script src="scripts/app/directives/chatMessageTemplate.js"></script>
 
     <!-- Services -->
     <script src="scripts/app/services/friends.js"></script>
+    <script src="scripts/app/services/shared-properties.js"></script>
 </body>
 </html>

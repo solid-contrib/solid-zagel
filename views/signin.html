@@ -1,8 +1,32 @@
-<div class="center-text" id="signin" ng-controller="SigninController">
+<header>
+	<div class="center-text">
+		<img src="img/solid-chat-logo.png"/>
+	</div>
+</header>
+
+<div class="center-text content" id="signin" ng-controller="SigninController">
 	<br/>
 	<div class="">
+		<div class="alert alert-success collapse" id="signin-success-alert" role="alert"> {{ signinResultText }}</div>
+		<div class="alert alert-danger collapse" id="signin-fail-alert" role="alert"> {{ signinResultText }}</div>
+		<br>
 		<a href="" ng-click="signinCallback()" class="btn btn-primary btn-lg btn-block">{{ signinText }}</a>
 		<hr/>
-		<a href="" ng-click="signupCallback()" class="btn btn-success btn-lg btn-block">{{ signupText }}</a>
+		<!--<a href="" ng-click="signupCallback()" class="btn btn-success btn-lg btn-block">{{ signupText }}</a>-->
+		<!-- Single button -->
+		<div class="btn-group">
+		  <button class="btn btn-success btn-lg dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+		    {{ signupText }} <span class="caret"></span>
+		  </button>
+		  <ul class="dropdown-menu">
+		    <li><a ng-click="signupCallback($event)" link-url="https://databox.me" href="">Databox</a></li>
+		    <li><a ng-click="signupCallback($event)" link-url="https://meccano.io" href="">Meccano</a></li>
+		    <!--<li role="separator" class="divider"></li>-->
+		  </ul>
+		</div>
 	</div>
 </div>
+
+<footer>
+    <div class="center-text"><a href="https://github.com/solid/solid-spec" target="_blank">Solid Specs</a> | <a href="https://docs.google.com/document/d/1MX0kxdNZGY3P33dCWK71sSEcc4ZdcaMSoVTEf4pqMhY/edit" target="_blank">Solid Chat Specs</a></div>
+</footer>

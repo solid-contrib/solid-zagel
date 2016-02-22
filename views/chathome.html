@@ -1,1 +1,233 @@
-<div>Chat Home</div>
+<div ng-controller="ChathomeController">
+	
+
+	<div id="wrapper">
+	    <!-- Sidebar -->
+	    <div id="sidebar-wrapper">
+	        <ul class="sidebar-nav list-group">
+	            <li class="sidebar-brand">
+	                <a href="">
+	                    <img class="fillImage" src="img/solid-chat-logo.png"/>
+	                </a>
+
+	            <br><br>
+	            </li>
+	            <li id="loadingFriendsList" class="sidebar-brand">
+	            	<div class="spinner">
+					  <div class="rect1"></div>
+					  <div class="rect2"></div>
+					  <div class="rect3"></div>
+					  <div class="rect4"></div>
+					  <div class="rect5"></div>
+					</div>
+					<div class="center-content textSizeBig"> loading friends list...</div>
+	            </li>
+
+	            <li class="friendListItem list-group-item" ng-repeat="friend in friends">
+	            	<friend-list-item parent-callback="startChat(webid)" friend="friend"></friend-list-item>
+	            </li>
+	        </ul>
+	    </div>
+	    <!-- /#sidebar-wrapper -->
+
+	    <!-- Page Content -->
+	    <div id="page-content-wrapper">
+	    	<!-- navigation bar for chat window -->
+	    	<nav class="navbar navbar-inverse container fixNavBar" role="navigation">
+			  <div class="container-fluid">
+			    <!-- Brand and toggle get grouped for better mobile display -->
+			    <div class="navbar-header">
+			      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+			        <span class="sr-only">Toggle navigation</span>
+			        <span class="icon-bar"></span>
+			        <span class="icon-bar"></span>
+			        <span class="icon-bar"></span>
+			      </button>
+			      <a href="#/chathome" class="btn btn-default panel-title" id="menu-toggle"><span class="glyphicon glyphicon-menu-left" aria-hidden="true"></span></a>
+			    </div>
+
+			    <!-- Collect the nav links, forms, and other content for toggling -->
+			    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+			    
+			      <ul class="nav navbar-nav navbar-right">
+			          <li class="dropdown">
+			          <a href="" class="dropdown-toggle" data-toggle="dropdown">Hi... {{ profileInfo.name}} <b class="caret"></b></a>
+			          <ul class="dropdown-menu">
+			            <li align="center" class="well">
+			                <div class="profileImage">
+			                	<a class="change" href="">
+			                		<img class="img-responsive" style="padding:2%;" ng-src="{{ profileInfo.avatar }}"/>
+			                	</a>
+			                </div>
+			                <br>
+			                <a href="" class="btn btn-sm btn-default"><span class="glyphicon glyphicon-lock"></span> Security</a>
+			                <a href="" class="btn btn-sm btn-default"><span class="glyphicon glyphicon-log-out"></span> Logout</a>
+			            </li>
+			           </ul>
+			        </li>
+			      </ul>
+			    </div><!-- /.navbar-collapse -->
+			  </div><!-- /.container-fluid -->
+			</nav>
+
+
+	        <!--<div class="container-fluid">-->
+	                	<!--<div class="container">-->
+						    <div class="row chat-window col-xs-5 col-md-3" id="chat_window">
+						        <div class="col-xs-12 col-md-12">
+						        	<div class="panel panel-default">
+						                <div class="panel-heading top-bar">
+						                	
+						                    <div class="col-md-8 col-xs-8">
+						                        <h1 class="panel-title"><span class="glyphicon glyphicon-comment"></span> {{ other.name }}</h3>
+						                    </div>
+						                    <!--<div class="col-md-4 col-xs-4" style="text-align: right;">
+						                        <a href="#"><span id="minim_chat_window" class="glyphicon glyphicon-minus icon_minim"></span></a>
+						                        <a href="#"><span class="glyphicon glyphicon-remove icon_close" data-id="chat_window_1"></span></a>
+						                    </div>-->
+						                </div>
+						                <div class="panel-body msg_container_base">
+
+
+						                	<div ng-repeat="msg in messages">
+						                		<chat-message-template msg="msg"></chat-message-template>
+						                	</div>
+
+
+
+
+
+						                    <!--<div class="row msg_container base_sent">
+						                        <div class="col-md-10 col-xs-10">
+						                            <div class="messages msg_sent">
+						                                <p>that mongodb thing looks good, huh?
+						                                tiny master db, and huge document store</p>
+						                                <time datetime="2009-11-13T20:00">Timothy • 51 min</time>
+						                            </div>
+						                        </div>
+						                        <div class="col-md-2 col-xs-2 avatar">
+						                            <img src="http://www.bitrebels.com/wp-content/uploads/2011/02/Original-Facebook-Geek-Profile-Avatar-1.jpg" class=" img-responsive chatImage">
+						                        </div>
+						                    </div>
+						                    <div class="row msg_container base_receive">
+						                        <div class="col-md-2 col-xs-2 avatar">
+						                            <img src="http://www.bitrebels.com/wp-content/uploads/2011/02/Original-Facebook-Geek-Profile-Avatar-1.jpg" class=" img-responsive chatImage">
+						                        </div>
+						                        <div class="col-md-10 col-xs-10">
+						                            <div class="messages msg_receive">
+						                                <p>that mongodb thing looks good, huh?
+						                                tiny master db, and huge document store</p>
+						                                <time datetime="2009-11-13T20:00">Timothy • 51 min</time>
+						                            </div>
+						                        </div>
+						                    </div>
+						                    <div class="row msg_container base_receive">
+						                        <div class="col-md-2 col-xs-2 avatar">
+						                            <img src="http://www.bitrebels.com/wp-content/uploads/2011/02/Original-Facebook-Geek-Profile-Avatar-1.jpg" class=" img-responsive chatImage">
+						                        </div>
+						                        <div class="col-xs-10 col-md-10">
+						                            <div class="messages msg_receive">
+						                                <p>that mongodb thing looks good, huh?
+						                                tiny master db, and huge document store</p>
+						                                <time datetime="2009-11-13T20:00">Timothy • 51 min</time>
+						                            </div>
+						                        </div>
+						                    </div>
+						                    <div class="row msg_container base_sent">
+						                        <div class="col-xs-10 col-md-10">
+						                            <div class="messages msg_sent">
+						                                <p>that mongodb thing looks good, huh?
+						                                tiny master db, and huge document store</p>
+						                                <time datetime="2009-11-13T20:00">Timothy • 51 min</time>
+						                            </div>
+						                        </div>
+						                        <div class="col-md-2 col-xs-2 avatar">
+						                            <img src="http://www.bitrebels.com/wp-content/uploads/2011/02/Original-Facebook-Geek-Profile-Avatar-1.jpg" class=" img-responsive chatImage">
+						                        </div>
+						                    </div>
+						                    <div class="row msg_container base_receive">
+						                        <div class="col-md-2 col-xs-2 avatar">
+						                            <img src="http://www.bitrebels.com/wp-content/uploads/2011/02/Original-Facebook-Geek-Profile-Avatar-1.jpg" class=" img-responsive chatImage">
+						                        </div>
+						                        <div class="col-xs-10 col-md-10">
+						                            <div class="messages msg_receive">
+						                                <p>that mongodb thing looks good, huh?
+						                                tiny master db, and huge document store</p>
+						                                <time datetime="2009-11-13T20:00">Timothy • 51 min</time>
+						                            </div>
+						                        </div>
+						                    </div>
+						                    <div class="row msg_container base_sent">
+						                        <div class="col-md-10 col-xs-10 ">
+						                            <div class="messages msg_sent">
+						                                <p>that mongodb thing looks good, huh?
+						                                tiny master db, and huge document store</p>
+						                                <time datetime="2009-11-13T20:00">Timothy • 51 min</time>
+						                            </div>
+						                        </div>
+						                        <div class="col-md-2 col-xs-2 avatar">
+						                            <img src="http://www.bitrebels.com/wp-content/uploads/2011/02/Original-Facebook-Geek-Profile-Avatar-1.jpg" class=" img-responsive chatImage">
+						                        </div>
+						                    </div>
+						                    <div class="row msg_container base_sent">
+						                        <div class="col-md-10 col-xs-10 ">
+						                            <div class="messages msg_sent">
+						                                <p>that mongodb thing looks good, huh?
+						                                tiny master db, and huge document store</p>
+						                                <time datetime="2009-11-13T20:00">Timothy • 51 min</time>
+						                            </div>
+						                        </div>
+						                        <div class="col-md-2 col-xs-2 avatar">
+						                            <img src="http://www.bitrebels.com/wp-content/uploads/2011/02/Original-Facebook-Geek-Profile-Avatar-1.jpg" class=" img-responsive chatImage">
+						                        </div>
+						                    </div>
+						                    <div class="row msg_container base_sent">
+						                        <div class="col-md-10 col-xs-10 ">
+						                            <div class="messages msg_sent">
+						                                <p>that mongodb thing looks good, huh?
+						                                tiny master db, and huge document store</p>
+						                                <time datetime="2009-11-13T20:00">Timothy • 51 min</time>
+						                            </div>
+						                        </div>
+						                        <div class="col-md-2 col-xs-2 avatar">
+						                            <img src="http://www.bitrebels.com/wp-content/uploads/2011/02/Original-Facebook-Geek-Profile-Avatar-1.jpg" class=" img-responsive chatImage">
+						                        </div>
+						                    </div>-->
+						                    <div> some text here </div>
+						                </div>
+						                <div class="panel-footer">
+						                    <div class="input-group">
+						                        <input id="input-chat" type="text" class="form-control input-sm chat_input" placeholder="enter your message..." />
+						                        <span class="input-group-btn">
+						                        <button class="btn btn-primary btn-sm" id="btn-send-chat">Send</button>
+						                        </span>
+						                    </div>
+						                </div>
+						    		</div>
+						        </div>
+						    </div>
+						    
+						    <!--<div class="btn-group dropup">
+						        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+						            <span class="glyphicon glyphicon-cog"></span>
+						            <span class="sr-only">Toggle Dropdown</span>
+						        </button>
+						        <ul class="dropdown-menu" role="menu">
+						            <li><a href="#" id="new_chat"><span class="glyphicon glyphicon-plus"></span> Novo</a></li>
+						            <li><a href="#"><span class="glyphicon glyphicon-list"></span> Ver outras</a></li>
+						            <li><a href="#"><span class="glyphicon glyphicon-remove"></span> Fechar Tudo</a></li>
+						            <li class="divider"></li>
+						            <li><a href="#"><span class="glyphicon glyphicon-eye-close"></span> Invisivel</a></li>
+						        </ul>
+						    </div>-->
+						<!--</div>-->
+	                    <!--<div class="fixedFooter">
+	                    	<input type="text" id="message_text_field" class="form-control fixTextInput" placeholder="enter text" aria-describedby="message-area">
+	                    	<button type="button" id="send_message_button" class="btn btn-primary fixButton">Send</button>
+	                    </div>-->
+	        <!--</div>-->
+	    </div>
+	    <!-- /#page-content-wrapper -->
+
+	</div>
+</div>

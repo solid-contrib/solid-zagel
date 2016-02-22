@@ -1,0 +1,10 @@
+{
+	"chatThreadsMetadataResource": {
+									"path":"Chat/ChatMetadata",
+									"data":"@prefix im: <http://www.w3.org/chat-rdf-vocab#>.\n\n<> a im:metadata."
+								},
+	"rootContainer": "Chat",
+	"friendRequestsContainer": "Chat/Requests",
+	"chatThreadsContainer": "Chat/Threads",
+	"chatNotifications": "Chat/Notifications"
+}
