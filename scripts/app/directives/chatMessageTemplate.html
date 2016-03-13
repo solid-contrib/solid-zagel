@@ -1,11 +1,20 @@
-<div class="row msg_container" ng-class="{{ msg.class }}">
-    <div class="col-md-10 col-xs-10">
-        <div class="messages msg_sent">
-            <p>{{ msg.content }}</p>
-            <time datetime="{{msg.time}}">{{  msg.time }}</time>
+<div class="row msg_container ng-class:post.baseClass" ng-switch on="post.whoisthis">
+    <div class="col-md-10 col-xs-10" ng-switch-when="me">
+        <div class="messages ng-class:post.msgClass">
+            <p>{{ post.content }}</p>
+            <time datetime="{{ post.time }}">{{  post.formattedTime }}</time>
         </div>
     </div>
-    <div class="col-md-2 col-xs-2 avatar">
-        <img ng-src="{{ msg.avatar }}" class=" img-responsive chatImage">
+    <div class="avatar col-md-2 col-xs-2"  ng-switch-when="me">
+        <img ng-src="{{ post.avatar }}" class="img-responsive chatImage">
+    </div>
+    <div class="avatar col-md-2 col-xs-2"  ng-switch-when="someoneelse">
+        <img ng-src="{{ post.avatar }}" class="img-responsive chatImage">
+    </div>
+    <div class="col-md-10 col-xs-10" ng-switch-when="someoneelse">
+        <div class="messages ng-class:post.msgClass">
+            <p>{{ post.content }}</p>
+            <time datetime="{{ post.time }}">{{  post.formattedTime }}</time>
+        </div>
     </div>
 </div>

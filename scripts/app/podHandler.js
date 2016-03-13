@@ -31,47 +31,52 @@ PodHandler.prototype.getWebsocket = function(successCAllback , failedCallback)
 };
 
 
-PodHandler.prototype.resourceExists = function(parentDir , resPath , successCAllback , failedCallback)
+PodHandler.prototype.resourceExists = function(parentDir , resName )
 {
-	console.log("Checking reousrce " + parentDir + resPath );
-	return Solid.web.head(parentDir + resPath).then(
-	  function(meta) {
-	    if (meta.xhr.status === 200) {
-	    	console.log("resource " + parentDir + resPath + " exists");
-	    	successCAllback(parentDir , resPath , 200);
-	    }
-	    else if (meta.xhr.status === 403) {
-	      console.log("You don't have access to the resource");
-	      failedCallback(parentDir , resPath , 403);
-	    } else if (meta.xhr.status === 404) {
-	      console.log(parentDir + resPath + " resource doesn't exist");
-	      failedCallback(parentDir , resPath, 404);
-	    }
-	  }
-	);
+	var promise = new Promise(function(resolve , reject) {
+		Solid.web.head(parentDir + resName).then(
+		  function(meta) {
+		    if (meta.xhr.status === 200)
+		    {
+		    	resolve({parentDir: parentDir , resName: resName , status: 200});
+		    }
+		    else if (meta.xhr.status === 403)
+		      	reject({parentDir: parentDir , resName: resName , status: 403});
+		    else if (meta.xhr.status === 404)
+		      	reject({parentDir: parentDir , resName: resName , status: 404});
+		  }
+		);
+	});
+
+	return promise;
 };
 
 
 
 
-PodHandler.prototype.getStorageLocation = function(webid , successCAllback, failedCallback)
+PodHandler.prototype.getStorageLocation = function(webid)
 {
-	var store = $rdf.graph();
-	var timeout = 5000; // 5000 ms timeout
-	var fetcher = new $rdf.Fetcher(store);
-	var profileDoc = getProfileDocumentLocation(webid);
+	var promise = new Promise(function(resolve , reject){
 
-	fetcher.nowOrWhenFetched(profileDoc, undefined , function(ok, body, xhr) {
-	    if (!ok) {
-	        console.log("Oops, something happened and couldn't fetch data");
-	        failedCallback(xhr.status);
-	    } else {
-	        var me = $rdf.sym(webid);
-			var storage = $rdf.sym('http://www.w3.org/ns/pim/space#storage');
-			var strg = store.any(me, storage);
+		var store = $rdf.graph();
+		var timeout = 5000; // 5000 ms timeout
+		var fetcher = new $rdf.Fetcher(store);
+		var profileDoc = getProfileDocumentLocation(webid);
 
-            successCAllback(strg.uri);         }     
-        }); 
+		fetcher.nowOrWhenFetched(profileDoc, undefined , function(ok, body, xhr) {
+		    if (!ok) {
+		        console.log("Oops, something happened and couldn't fetch data");
+		        reject(xhr.status);
+		    } else {
+		        var me = $rdf.sym(webid);
+				var storage = $rdf.sym('http://www.w3.org/ns/pim/space#storage');
+				var strg = store.any(me, storage);
+
+	            resolve(strg.uri);         }     
+	        }); 
+	});
+	
+	return promise;
 };
 
 
@@ -99,6 +104,7 @@ PodHandler.prototype.getProfileInfo = function(webid , successCAllback , failedC
 			var entity = $rdf.sym(webid);
 			var entityObj = {};
 			entityObj.webid = webid;
+			entityObj.friendlyWebid = friendlyWebid(webid);
 			entityObj.name = store.any(entity , FOAF("name") , undefined);
 			if (typeof entityObj.name === 'object') entityObj.name = entityObj.name.value;
 			entityObj.avatar = store.any(entity , FOAF("img") , undefined);

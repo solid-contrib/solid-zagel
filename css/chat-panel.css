@@ -41,6 +41,7 @@ h3 > .panel-title {
   margin: 0;
   padding: 0 10px 10px;
   overflow-x:hidden;
+  height: 100%;
 }
 .top-bar {
   background: #666;
@@ -48,6 +49,7 @@ h3 > .panel-title {
   padding: 10px;
   position: relative;
   overflow: hidden;
+  margin-top: 50px;
 }
 
 .top-bar > .btn {

@@ -6,12 +6,16 @@
 	background-color: transparent;
 }
 
+.friendLinkContainer {
+	height: 100%;
+}
+
 .friendIcon {
 	max-width: 25%;
 	width: 20%;
 	height: 100%;
 	margin-right: 10px;
-	margin-top: 10px;
+	margin-top: 0px;
 	float: left;
 }
 
@@ -28,6 +32,7 @@
 	color: lightGray;
 	font-size: medium;
 	text-align: left;
+	text-overflow: ellipsis;
 }
 
 .friendStatus {

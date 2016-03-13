@@ -3,19 +3,30 @@ var conCreationStatus = {};
 var alreadyDone = false;
 var me = {};
 var other = {};
-var messages = {};
-var storagePath = "/Public/";
+var messagesArray = [];
+var messagesObject = {};
+var storagePath = "Public/";
 const MAX_TRIALS = 3;
+var postsChanged = false;
 var podHandler;
 var chatHandler;
 
-app.controller('ChathomeController', function($scope, sharedProperties) {
+app.controller('ChathomeController', function($scope, $location , $window , sharedProperties) {
   
 	me.webid = sharedProperties.getUserInfo().webid;
 	podHandler = new PodHandler(me.webid);
-	
+	$scope.posts = [];
 
-	// $scope.me = me;
+	$scope.safeApply = function(fn) {
+	  var phase = this.$root.$$phase;
+	  if(phase == '$apply' || phase == '$digest') {
+	    if(fn && (typeof(fn) === 'function')) {
+	      fn();
+	    }
+	  } else {
+	    this.$apply(fn);
+	  }
+	};
 
 	var createContainers = function() {
 		$.getJSON('containers.json', function(response){
@@ -44,10 +55,12 @@ app.controller('ChathomeController', function($scope, sharedProperties) {
 		 		var parentDir = me.storage + storagePath;
 
 		 		// console.log("key = " + key + " value = " + resource);
-		 	 	podHandler.resourceExists(parentDir , resPath , function(parentDir , resPath, status){
+		 	 	podHandler.resourceExists(parentDir , resPath)
+		 	 	.then( function(parentDir , resPath, status){
 		 	 		console.log("success: status is " + status);
 		 	 		conCreationStatus[parentDir + resPath] = "Created";
-		 	 	}, function(parentDir , resPath, status) {
+		 	 	})
+		 	 	.catch( function(parentDir , resPath, status) {
 		 	 		console.log("failure: status is " + status);
 
 		 	 		var isCreated = conCreationStatus[parentDir+resPath] === "Created" || conCreationStatus[parentDir+resPath] === "Creating";
@@ -77,9 +90,11 @@ app.controller('ChathomeController', function($scope, sharedProperties) {
 
 		podHandler.getProfileInfo(me.webid , function(myInfo) {
 
-			me.profileInfo = myInfo;
-			$scope.profileInfo = myInfo;
-			$scope.$apply();
+			
+			$scope.safeApply(function(){
+				me.profileInfo = myInfo;
+				$scope.profileInfo = myInfo;
+			});
 
 		} , function(status) {
 
@@ -109,9 +124,22 @@ app.controller('ChathomeController', function($scope, sharedProperties) {
 				console.log(friend.name);
 			}
 
-			$scope.friends = friendsList;
-			$scope.me = me;
-			$scope.$apply();
+			if ( !me.friends[me.webid] && me.profileInfo )
+			{
+				me.friends[me.webid] = {
+						avatar: me.profileInfo.avatar,
+						name: me.profileInfo.name,
+						notifications: 14,
+						status: 'online',
+						storage: me.profileInfo.storage,
+						webid: me.webid
+					};
+			}
+			
+			$scope.safeApply(function() {
+				$scope.friends = friendsList;
+				$scope.me = me;
+			});
 
 		} , function(status) {
 
@@ -125,16 +153,6 @@ app.controller('ChathomeController', function($scope, sharedProperties) {
 
 	var showFriendsList = function() {
 		$scope.me = me;
-
-		// $(".friendName").bigText({
-  //           horizontalAlign: "left",
-  //           maximumFontSize: 10,
-  //       });
-
-		// $(".friendStatus").bigText({
-  //           horizontalAlign: "left",
-  //           maximumFontSize: 10,
-  //       });
 		setTimeout(function() { $('#loadingFriendsList').hide(); }, 1000);
 	};
 
@@ -142,38 +160,60 @@ app.controller('ChathomeController', function($scope, sharedProperties) {
 		podHandler.getWebsocket(function(websocket) {
 			me.websocket = websocket;
 			$scope.me.websocket = websocket;
-			chatHandler = new ChatHandler($scope.me);
+			chatHandler = new ChatHandler($scope);
 		}, function(status) {
 
 		});
 	};
 
+	var logout = function() {
+        
+        // if ( $window.crypto )
+        // 	$window.crypto.logout();
+
+        //reset user data
+        $scope.me = {};
+        $scope.profileInfo = {};
+        $scope.friends = {};
+        
+        //redirect to the login page
+        setTimeout( function() {
+	      	$scope.safeApply(function() {
+		        $location.path("/signin");
+		      });
+	      } , 1000);
+    };
+
+    $scope.logout = logout;
+
 	$('#loadingFriendsList').show();
 
-	podHandler.getStorageLocation(me.webid , function(storage) {	// success
-		me.storage = storage;
-
-		if (!alreadyDone)
+	podHandler.getStorageLocation(me.webid)
+		.then(function(storage)
 		{
-			fetchFriendsretrials = 0;
-			fetchProfInfoRetrials = 0;
+			me.storage = storage;
 
-			openPodConnection();
-			createContainers();
-			fetchFriendsList(fetchFriendsretrials++ < MAX_TRIALS);
+			if (!alreadyDone)
+			{
+				fetchFriendsretrials = 0;
+				fetchProfInfoRetrials = 0;
 
-			fetchMyInfo(fetchProfInfoRetrials++ < MAX_TRIALS);
+				openPodConnection();
+				createContainers();
+				fetchFriendsList(fetchFriendsretrials++ < MAX_TRIALS);
 
-			showFriendsList();
+				fetchMyInfo(fetchProfInfoRetrials++ < MAX_TRIALS);
 
-			alreadyDone = true;
-		}
+				showFriendsList();
 
-		console.log("user's pod is " + storage);
-	} ,
-	function (errorCode) {	//failure
-		console.log("Error retrieveing storage code " + errorCode);
-	});
+				alreadyDone = true;
+			}
+
+			console.log("user's pod is " + storage);
+		})
+		.catch(function (errorCode) {	//failure
+			console.log("Error retrieveing storage code " + errorCode);
+		});
 
 	 
 
@@ -183,21 +223,188 @@ app.controller('ChathomeController', function($scope, sharedProperties) {
 	var startChat = function (webid) {
 		console.log("Start Chat with " + webid);
 
-		$('#chat_window').show();
-		other = me.friends[webid];
+		if ( webid === $scope.currentChatWebid )
+			return;
 
-		$scope.other = other;
-		$scope.$apply();
+		startChatUIUpdate(webid);
+
+		other = me.friends[webid];
+		$scope.currentChatWebid = webid;
+
+		$scope.safeApply(function() {
+			$scope.other = other;
+			$scope.posts = [];
+		});
 
 		//send chat init request
-		chatHandler.startChatWith(other , function() {
+		showMessageLoading(true);
 
-		} , function () {
+		chatHandler.startChatWith(other , 10000).then( function(response) {
 
-		} , 10000);
+			setTimeout(function () {
+				showMessageLoading(false);
+			} , 2000);
+
+			// chatHandler.wipeContainer(me.storage + "Public/Chat/Threads/" + response.resName + "/");
+			// chatHandler.wipeContainer(other.storage + "Public/Chat/Threads/" + response.resName + "/");
+
+
+			// chatHandler.sendPostToCurrentChat("hello this is a test message" , PostType.text).then(function(meta){
+
+				
+			// });
+		})
+		.catch( function (error) {
+			showMessageLoading(false);
+		});
+
+		// periodically check whether posts are changed to display them.
+		setInterval( displayPosts , 1000);
 	};
 
 	$scope.startChat = startChat;
+
+	var displayPosts = function () {
+
+		if ( postsChanged )
+		{
+			orderMessages();
+			$scope.$apply();
+			postsChanged = false ;
+
+			$window.scrollTo(0,document.body.scrollHeight);
+		}
+	};
+
+	var startChatUIUpdate = function (webid) {
+
+		$('#chat_window').show();
+		$('.friendLinkContainer').css('background-color' , 'transparent');
+		var fwebid = friendlyWebid(webid)
+		$('#' + fwebid).css('background-color', 'blue');
+	};
+
+	var bindMessages = function(postsList) {
+
+		// if the number of posts retrieved from the server is the same as the ones already bound,
+		// this means no need to rebind as this update because of pushing my own message into my pod.
+		// this message is already added before sending it to the pod
+		if ( postsList.length <= $scope.posts.length )
+			return ;
+
+		for ( var i in postsList)
+		{
+			var post = postsList[i];
+			var participant = me.friends[post.sender] || me.profileInfo;
+
+			if ( participant )
+			{
+				post.avatar = participant.avatar || "http://www.bitrebels.com/wp-content/uploads/2011/02/Original-Facebook-Geek-Profile-Avatar-1.jpg";
+				post.name = participant.name;
+
+				addMessage(post , post.time);
+			}
+		}
+
+		postsChanged = true;
+	};
+
+	$scope.bindMessages = bindMessages;
+
+	var sendMessage = function(e) {
+
+		var msg = $('#input-chat').val();
+
+		if ( msg.length > 0 )
+		{
+			var type = PostType.text;
+			var timestamp = Date.now();
+			chatHandler.sendPostToCurrentChat(msg , type , timestamp).then(function(timestamp){
+
+
+			});
+
+			var post = {
+				sender: me.webid,
+				type: type,
+				time: timestamp,
+				content: msg,
+				avatar: me.profileInfo.avatar
+			}
+
+			$scope.safeApply(function() {
+
+				addMessage(post , "" + timestamp);
+
+				setTimeout(function() {$window.scrollTo(0,document.body.scrollHeight);	} , 50);
+			});
+
+			//clear the text field
+			$("#input-chat").val("");
+		}
+	};
+
+	$scope.sendMessage = sendMessage;
+
+	var showMessageLoading = function(show) {
+
+		if (show)
+		{
+			$('#loadingMessages').show();
+			$('#input-chat').prop('disabled' , true);
+			$('#btn-send-chat').prop('disabled' , true);
+		}
+		else
+		{
+			$('#loadingMessages').hide();
+			$('#input-chat').prop('disabled' , false);
+			$('#btn-send-chat').prop('disabled' , false);
+			$('#input-chat').focus();
+		}
+	};
+
+	var addMessage = function(post , timestamp) {
+
+		if ( timestamp !== "undefined" && messagesArray.indexOf(timestamp) === -1 )
+		{
+			if ( post.sender === me.webid )
+			{
+				post.whoisthis = "me";
+				post.baseClass = "base_sent";
+				post.msgClass = "msg_sent";
+			}
+			else
+			{
+				post.whoisthis = "someoneelse";
+				post.baseClass = "base_receive";
+				post.msgClass = "msg_recei";
+			}
+
+			post.formattedTime = timestampToDate(timestamp);
+
+			messagesArray.push(timestamp);
+			messagesObject[timestamp] = post;
+
+			$scope.posts.push(post);
+		}
+	};
+
+	var orderMessages = function() {
+
+		messagesArray.sort();
+
+		var posts = [];
+
+		for ( var i in messagesArray)
+		{
+			var timestamp = messagesArray[i];
+			var post = messagesObject[timestamp];
+
+			posts.push(post);
+		}
+
+		$scope.posts = posts;
+	};
 
 	//show/hide the side menu
 	$("#menu-toggle").off('click').on( 'click' , function(e) {
@@ -222,12 +429,16 @@ app.controller('ChathomeController', function($scope, sharedProperties) {
 	    }
 	});
 
-	$("#btn-send-chat").off('click').on('click', function(e) {
+	// $("#btn-send-chat").off('click').on('click', function(e) {
 
-    	//send message logic goes here
+ //    	//send message logic goes here
 
-    	$("#input-chat").val("");
-    });
+ //    	$("#input-chat").val("");
+ //    });
 
     $('#chat_window').hide();
+    $('#loadingMessages').hide();
+    $('#input-chat').prop('disabled' , true);
+	$('#btn-send-chat').prop('disabled' , true);
+	$('.msg_container_base').css('min-height' , $window.innerHeight + "px;");
 });

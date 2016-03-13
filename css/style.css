@@ -57,9 +57,14 @@ footer {
   color: #C6BCBC;
 }
 
-.fixNavBar {
-  margin-bottom: 0px;
-  width: 100%;
+.fixedNavBar {
+  z-index: 1000;
+  position: fixed;
+  margin-top: 0px;
+  margin-right: 0px;
+  margin-left: 0px;
+  top: 0px;
+  max-height: 50px;
 }
 
 .profileImage {
@@ -68,10 +73,12 @@ footer {
 }
 
 .fixedFooter {
+  z-index: 1000;
   position: fixed;
+  margin-bottom: 0px;
+  margin-left: 0px;
+  margin-right: 0px;
   bottom: 0px;
-  left: 300px;
-  right: 0px;
 }
 
 .fixTextInput {

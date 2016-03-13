@@ -2,7 +2,7 @@ app.directive('chatMessageTemplate', function() {
   return { 
     restrict: 'E', 
     scope: { 
-      msg: '='
+      post: '='
     }, 
     templateUrl: 'scripts/app/directives/chatMessageTemplate.html',
     
