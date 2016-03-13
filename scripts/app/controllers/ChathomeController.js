@@ -6,7 +6,7 @@ var other = {};
 var messagesArray = [];
 var messagesObject = {};
 var storagePath = "Public/";
-const MAX_TRIALS = 3;
+const MAX_TRIALS = 6;
 var postsChanged = false;
 var podHandler;
 var chatHandler;
@@ -56,23 +56,22 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 
 		 		// console.log("key = " + key + " value = " + resource);
 		 	 	podHandler.resourceExists(parentDir , resPath)
-		 	 	.then( function(parentDir , resPath, status){
-		 	 		console.log("success: status is " + status);
-		 	 		conCreationStatus[parentDir + resPath] = "Created";
+		 	 	.then( function(response){
+		 	 		console.log("success: status is " + response.status);
+		 	 		conCreationStatus[response.parentDir + response.resName] = "Created";
 		 	 	})
-		 	 	.catch( function(parentDir , resPath, status) {
-		 	 		console.log("failure: status is " + status);
+		 	 	.catch( function(response) {
+		 	 		console.log("failure: status is " + response.status);
 
-		 	 		var isCreated = conCreationStatus[parentDir+resPath] === "Created" || conCreationStatus[parentDir+resPath] === "Creating";
-		 	 		console.log(conCreationStatus);
-		 	 		console.log("isCreated = " + isCreated);
+		 	 		var isCreated = conCreationStatus[response.parentDir+response.resName] === "Created" ||
+		 	 						conCreationStatus[response.parentDir+response.resName] === "Creating";
 
-		 	 		if (status === 404 && isCreated === false)	//not found
+		 	 		if (response.status === 404 && isCreated === false)	//not found
 		 	 		{
-		 	 			conCreationStatus[parentDir+resPath] = "Creating";
-		 	 			podHandler.createContainer(parentDir , resPath, function(meta){
+		 	 			conCreationStatus[response.parentDir+response.resName] = "Creating";
+		 	 			podHandler.createContainer(response.parentDir , response.resName, function(meta){
 		 	 				console.log("container created: " + meta.url);
-		 	 				conCreationStatus[parentDir + resPath] = "Created";
+		 	 				conCreationStatus[response.parentDir + response.resName] = "Created";
 		 	 			}, function (error) {
 		 	 				console.log("error creating container " + error);
 		 	 			}, resData);
@@ -88,7 +87,8 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 
 	var fetchMyInfo = function(retry) {
 
-		podHandler.getProfileInfo(me.webid , function(myInfo) {
+		podHandler.getProfileInfo(me.webid)
+		.then(function(myInfo) {
 
 			
 			$scope.safeApply(function(){
@@ -96,7 +96,8 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 				$scope.profileInfo = myInfo;
 			});
 
-		} , function(status) {
+		})
+		.catch(function(status) {
 
 			if (retry)
 			{
@@ -109,14 +110,16 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 	var fetchFriendsretrials = 0;
 
 	var fetchFriendsList = function(retry) {
-		podHandler.getFriends(me.webid , function(friendsList) {
+
+		podHandler.getFriends(me.webid)
+		.then( function(friendsList) {
 
 			me.friends = {};
 
 			for(var i in friendsList)
 			{
 				friend = friendsList[i];
-				friend.notifications = 14;
+				friend.notifications = getRandomIntInclusive(0 , 15);
 				friend.status = "online";
 
 				me.friends[friend.webid] = friend;
@@ -129,7 +132,7 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 				me.friends[me.webid] = {
 						avatar: me.profileInfo.avatar,
 						name: me.profileInfo.name,
-						notifications: 14,
+						notifications: getRandomIntInclusive(0 , 15),
 						status: 'online',
 						storage: me.profileInfo.storage,
 						webid: me.webid
@@ -141,11 +144,14 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 				$scope.me = me;
 			});
 
-		} , function(status) {
+		})
+		.catch(function(status) {
 
 			if (retry)
 			{
-				fetchFriendsList(fetchFriendsretrials++ < MAX_TRIALS);
+				setTimeout(function(){
+					fetchFriendsList(fetchFriendsretrials++ < MAX_TRIALS);
+				} , fetchFriendsretrials * 200);
 			}
 
 		});
@@ -245,6 +251,8 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 				showMessageLoading(false);
 			} , 2000);
 
+			other.notifications = 0;
+			$scope.$apply();
 			// chatHandler.wipeContainer(me.storage + "Public/Chat/Threads/" + response.resName + "/");
 			// chatHandler.wipeContainer(other.storage + "Public/Chat/Threads/" + response.resName + "/");
 
@@ -405,6 +413,13 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 
 		$scope.posts = posts;
 	};
+
+	var getFriendObject = function(webid) {
+
+		return me.friends[webid];
+	};
+
+	$scope.getFriendObject = getFriendObject;
 
 	//show/hide the side menu
 	$("#menu-toggle").off('click').on( 'click' , function(e) {

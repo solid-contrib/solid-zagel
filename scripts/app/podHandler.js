@@ -83,38 +83,43 @@ PodHandler.prototype.getStorageLocation = function(webid)
 
 
 
-PodHandler.prototype.getProfileInfo = function(webid , successCAllback , failedCallback)
+PodHandler.prototype.getProfileInfo = function(webid)
 {
-	var profileDoc = getProfileDocumentLocation(webid);
+	var promise = new Promise(function(resolve , reject) {
 
-	var store = $rdf.graph();
-	var fetcher = new $rdf.Fetcher(store , 5000);
+		var profileDoc = getProfileDocumentLocation(webid);
 
-	fetcher.nowOrWhenFetched(profileDoc , undefined , function(ok , body , xhr) {
-		if (!ok)
-		{
-			console.log("failed to bring friend's info for " + webid + " status: " + xhr.status);
+		var store = $rdf.graph();
+		var fetcher = new $rdf.Fetcher(store , 5000);
 
-			failedCallback(xhr.status);
-		}
-		else
-		{
-			console.log("firnd info loaded successfully for " + webid);
+		fetcher.nowOrWhenFetched(profileDoc , undefined , function(ok , body , xhr) {
+			if (!ok)
+			{
+				console.log("failed to bring friend's info for " + webid + " status: " + xhr.status);
 
-			var entity = $rdf.sym(webid);
-			var entityObj = {};
-			entityObj.webid = webid;
-			entityObj.friendlyWebid = friendlyWebid(webid);
-			entityObj.name = store.any(entity , FOAF("name") , undefined);
-			if (typeof entityObj.name === 'object') entityObj.name = entityObj.name.value;
-			entityObj.avatar = store.any(entity , FOAF("img") , undefined);
-			if (typeof entityObj.avatar === 'object') entityObj.avatar = entityObj.avatar.uri;
-			entityObj.storage = store.any(entity , WRKSPC("storage") , undefined);
-			if (typeof entityObj.storage === 'object') entityObj.storage = entityObj.storage.uri;
-			//load more parameters from the profile doc.
-			successCAllback(entityObj);
-		}
+				reject(xhr.status);
+			}
+			else
+			{
+				console.log("firnd info loaded successfully for " + webid);
+
+				var entity = $rdf.sym(webid);
+				var entityObj = {};
+				entityObj.webid = webid;
+				entityObj.friendlyWebid = friendlyWebid(webid);
+				entityObj.name = store.any(entity , FOAF("name") , undefined);
+				if (typeof entityObj.name === 'object') entityObj.name = entityObj.name.value;
+				entityObj.avatar = store.any(entity , FOAF("img") , undefined);
+				if (typeof entityObj.avatar === 'object') entityObj.avatar = entityObj.avatar.uri;
+				entityObj.storage = store.any(entity , WRKSPC("storage") , undefined);
+				if (typeof entityObj.storage === 'object') entityObj.storage = entityObj.storage.uri;
+				//load more parameters from the profile doc.
+				resolve(entityObj);
+			}
+		});
 	});
+
+	return promise;
 };
 
 
@@ -144,46 +149,54 @@ PodHandler.prototype.createContainer = function(parentDir , resPath, successCAll
 
 
 
-PodHandler.prototype.getFriends = function(webid , successCAllback , failedCallback)
+PodHandler.prototype.getFriends = function(webid)
 {
 	var store = $rdf.graph();
 	var fetcher = new $rdf.Fetcher(store , 5000);
 	var profileCard = getProfileDocumentLocation(webid);
 	var that = this;
 
-	fetcher.nowOrWhenFetched(profileCard , undefined , function(ok , body , xhr) {
-		if (!ok)
-		{
-			console.log("failed to bring friends for " + webid);
-			failedCallback(xhr.status);
-		}
-		else
-		{
-			console.log("friends list obtained for " + webid);
+	var promise = new Promise( function(resolve , reject) {
 
-			var me = $rdf.sym(webid);
-			var friends = store.each(me , FOAF("knows") , undefined);
-
-			var totalFriends = friends.length;
-			var friendsList = [];
-
-			for (var i = 0 ; i < friends.length ; i++ )
+		fetcher.nowOrWhenFetched(profileCard , undefined , function(ok , body , xhr) {
+			if (!ok)
 			{
-				var friend = friends[i];
-
-				that.getProfileInfo(friend.uri , function(friendObj) {
-					friendsList.push(friendObj);
-					totalFriends--;
-
-					if (totalFriends === 0)
-					{
-						successCAllback(friendsList);
-					}
-				}, function(status){
-					console.log("Can't get friend " + friend + " data");
-					totalFriends--;
-				});
+				console.log("failed to bring friends for " + webid);
+				reject(xhr.status);
 			}
-		}
+			else
+			{
+				console.log("friends list obtained for " + webid);
+
+				var me = $rdf.sym(webid);
+				var friends = store.each(me , FOAF("knows") , undefined);
+
+				var totalFriends = friends.length;
+				var friendsList = [];
+
+				for (var i = 0 ; i < friends.length ; i++ )
+				{
+					var friend = friends[i];
+
+					that.getProfileInfo(friend.uri)
+					.then(function(friendObj) {
+						friendsList.push(friendObj);
+						totalFriends--;
+
+						if (totalFriends === 0)
+						{
+							resolve(friendsList);
+						}
+					})
+					.catch(function(status){
+						console.log("Can't get friend " + friend + " data");
+						totalFriends--;
+						reject(status);
+					});
+				}
+			}
+		});
 	});
+
+	return promise;
 };

@@ -47,7 +47,7 @@ var timestampToDate = function(timestamp) {
 	  var hour = a.getHours();
 	  var min = a.getMinutes();
 	  var sec = a.getSeconds();
-	  var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+	  var time = date + ' ' + month + ' 2016 ' + hour + ':' + min + ':' + sec ;
 	  return time;
 };
 
@@ -58,4 +58,8 @@ var friendlyWebid = function(webid) {
 			.split(':').join("")
 			.split('#').join("")
 			.split('.').join("");
+};
+
+var getRandomIntInclusive = function (min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 };

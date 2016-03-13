@@ -220,6 +220,84 @@ ChatHandler.prototype.parseNotifications = function(notifStmts)
 	});
 };
 
+ChatHandler.prototype.loadNotification = function(notifUrl)
+{
+	var promise = new Promise(function(resolve , reject) {
+		Solid.web.get(notifUrl).then(
+			function(graph){
+
+				var notSubject = graph.any(undefined , RDF('type') , CHAT('Notification') );
+
+				if (notSubject)
+				{
+					var notif = {};
+					notif.uri = notSubject.uri
+
+					var type = graph.any(notSubject , CHAT('notificationType') , undefined);
+
+					if (type)
+						notif.type = type.value.substr(type.value.indexOf('#') + 1);
+
+					var sender = graph.any(notSubject , CHAT('sender') , undefined);
+
+					if (sender)
+						notif.sender = sender.value;
+
+					var threadContainer = graph.any(notSubject , CHAT('threadContainer') , undefined);
+
+					if (threadContainer)
+						notif.threadContainer = threadContainer.value;
+
+					var time = graph.any(notSubject , CHAT('time') , undefined);
+
+					if (threadContainer)
+						notif.time = time.value;
+
+					resolve(notif);
+				}
+
+				reject("no notifications found");
+			})
+		.catch(function(err) {
+			reject(err);
+		});
+	});
+
+	return promise;
+};
+
+ChatHandler.prototype.sendNotification = function(container , type , data)
+{
+	var that = this;
+	var promise = new Promise(function ( resolve , reject ) {
+
+		var timestamp = Date.now();
+		var content = '@prefix ldchat: ' + CHAT_NAMESPACE + '.\n\n' +
+					'<> a ldchat:Notification;\n' +
+			    	'ldchat:notificationType ldchat:' + type + ' ;\n' +
+			    	'ldchat:sender <' + that.entity.webid + '>;\n'+
+			    	'ldchat:threadContainer \"' + data + '\";\n' +
+					'ldchat:time \"' + timestamp + '\";';
+
+
+
+		Solid.web.create(container , content , type).then(
+			function(meta) {
+				console.log("resource created " + meta.url);
+				resolve(meta);
+			}).catch(function(err) {
+				reject(err);
+			});
+	});
+
+	return promise;
+};
+
+ChatHandler.prototype.notificationRecieved = function(container , name , type)
+{
+
+};
+
 ChatHandler.prototype.digestNotification = function(notif)
 {
 	var that = this;
@@ -263,6 +341,7 @@ ChatHandler.prototype.digestNotification = function(notif)
 					  function(solidResponse) {
 					    console.log("res " + solidResponse.url + " created successfully");
 
+					    // that.subscribeToContainer("Chat/Threads/" + containerName);
 					    
 					    that.sendNotification(friendsNotificationDir , NotificationType.handshakereply , containerName).then(
 					    	function(meta){
@@ -324,6 +403,15 @@ ChatHandler.prototype.deleteNotification = function(notification)
 	return promise;
 };
 
+ChatHandler.prototype.initChatWith = function(friends , containerName) {
+
+	this.currentChat.friends = friends;
+	this.currentChat.container = containerName;
+	this.currentChat.messages = [];
+
+	this.subscribeToContainer("Chat/Threads/" + containerName);
+};
+
 ChatHandler.prototype.startChatWith = function(friend , timeout)
 {
 	//ensure the websocket to my pod is open
@@ -349,23 +437,24 @@ ChatHandler.prototype.startChatWith = function(friend , timeout)
 			.then( function(response) {
 				//no need for handshake. Ready to send messages
 				console.log("no need for handshaking. Ready for messaging");
-				
-				that.currentChat.friends = [friend];
-				that.currentChat.container = containerName;
-				that.currentChat.messages = [];
-
-				that.subscribeToContainer("Chat/Threads/" + containerName);
 
 				resolve(response);
 			})
 			.catch( function (response) {
-				that.sendNotification(friendsNotificationsDir , NotificationType.handshakestart , containerName).then(
-					function(meta){
-						resolve(meta);
-					})
-				.catch(function(error){
-					reject(error);
-				});
+				if ( response.status === 404 )
+				{
+					that.sendNotification(friendsNotificationsDir , NotificationType.handshakestart , containerName).then(
+						function(meta){
+							resolve(meta);
+						})
+					.catch(function(error){
+						reject(error);
+					});
+				}
+				else
+				{
+					console.log("friend's container can't be found with status: " + response.status);
+				}
 			});
 		}) 
 		.catch( function(response) {
@@ -385,89 +474,14 @@ ChatHandler.prototype.startChatWith = function(friend , timeout)
 			  reject(err);
 			});
 		});
+
+		//listen to changes in this container to update messages recieved.
+		that.initChatWith([friend] , containerName);
 	});
 
 	return promise;
 };
 
-
-ChatHandler.prototype.sendNotification = function(container , type , data)
-{
-	var that = this;
-	var promise = new Promise(function ( resolve , reject ) {
-
-		var timestamp = Date.now();
-		var data = '@prefix ldchat: ' + CHAT_NAMESPACE + '.\n\n' +
-					'<> a ldchat:Notification;\n' +
-			    	'ldchat:notificationType ldchat:' + type + ' ;\n' +
-			    	'ldchat:sender <' + that.entity.webid + '>;\n'+
-			    	'ldchat:threadContainer \"' + data + '\";\n' +
-					'ldchat:time \"' + timestamp + '\";';
-
-
-
-		Solid.web.create(container , data , type).then(
-			function(meta) {
-				console.log("resource created " + meta.url);
-				resolve(meta);
-			}).catch(function(err) {
-				reject(err);
-			});
-	});
-
-	return promise;
-};
-
-ChatHandler.prototype.loadNotification = function(notifUrl)
-{
-	var promise = new Promise(function(resolve , reject) {
-		Solid.web.get(notifUrl).then(
-			function(graph){
-
-				var notSubject = graph.any(undefined , RDF('type') , CHAT('Notification') );
-
-				if (notSubject)
-				{
-					var notif = {};
-					notif.uri = notSubject.uri
-
-					var type = graph.any(notSubject , CHAT('notificationType') , undefined);
-
-					if (type)
-						notif.type = type.value.substr(type.value.indexOf('#') + 1);
-
-					var sender = graph.any(notSubject , CHAT('sender') , undefined);
-
-					if (sender)
-						notif.sender = sender.value;
-
-					var threadContainer = graph.any(notSubject , CHAT('threadContainer') , undefined);
-
-					if (threadContainer)
-						notif.threadContainer = threadContainer.value;
-
-					var time = graph.any(notSubject , CHAT('time') , undefined);
-
-					if (threadContainer)
-						notif.time = time.value;
-
-					resolve(notif);
-				}
-
-				reject("no notifications found");
-			})
-		.catch(function(err) {
-			reject(err);
-		});
-	});
-
-	return promise;
-};
-
-ChatHandler.prototype.notificationRecieved = function(container , name , type)
-{
-
-};
 
 ChatHandler.prototype.sendPost = function(friends , thread , content , type , timestamp)
 {
