@@ -7,14 +7,21 @@ var messagesArray = [];
 var messagesObject = {};
 var storagePath = "Public/";
 const MAX_TRIALS = 6;
+const NOTIFICATION_UPDATE_INTERVAL = 10000;
 var postsChanged = false;
+var friendsListChanged = false;
 var podHandler;
 var chatHandler;
 
 app.controller('ChathomeController', function($scope, $location , $window , sharedProperties) {
   
-	me.webid = sharedProperties.getUserInfo().webid;
-	podHandler = new PodHandler(me.webid);
+  	if ( !me.webid )
+  	{
+  		alreadyDone = false;
+  		me.webid = sharedProperties.getUserInfo().webid || sessionStorage.getItem("userWebid");
+		podHandler = new PodHandler(me.webid);
+  	}
+	
 	$scope.posts = [];
 
 	$scope.safeApply = function(fn) {
@@ -139,10 +146,11 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 					};
 			}
 			
-			$scope.safeApply(function() {
-				$scope.friends = friendsList;
-				$scope.me = me;
-			});
+			// $scope.safeApply(function() {
+			// 	$scope.friends = friendsList;
+			// 	$scope.me = me;
+			// });
+			friendsListChanged = true;
 
 		})
 		.catch(function(status) {
@@ -159,17 +167,58 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 
 	var showFriendsList = function() {
 		$scope.me = me;
+
+		var friends = [];
+
+		for (var key in me.friends)
+		{
+			var friend = me.friends[key];
+			friends.push(friend);
+		}
+
+		friends.sort( function (friend1 , friend2) {
+			return friend1.name.localeCompare(friend2.name);
+		});
+
+		$scope.safeApply(function() {
+			$scope.friends = friends;
+		});
+
 		setTimeout(function() { $('#loadingFriendsList').hide(); }, 1000);
 	};
 
 	var openPodConnection = function() {
 		podHandler.getWebsocket(function(websocket) {
 			me.websocket = websocket;
+			$scope.me = me;
 			$scope.me.websocket = websocket;
 			chatHandler = new ChatHandler($scope);
 		}, function(status) {
 
 		});
+	};
+
+	var updateNotifications = function() {
+		if ( chatHandler )
+		{
+			setInterval(function(){
+				chatHandler.updateNotifications(me.friends).then(
+					function(notifications){
+						for (var key in me.friends)
+						{
+							var friendNotifications = notifications[key];
+							var friend = me.friends[key];
+							friend.notifications = friendNotifications;
+						}
+
+						friendsListChanged = true;
+				})
+				.catch(function(err){
+
+				});
+
+			} , NOTIFICATION_UPDATE_INTERVAL);
+		}
 	};
 
 	var logout = function() {
@@ -178,9 +227,11 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
         // 	$window.crypto.logout();
 
         //reset user data
+        me = {};
         $scope.me = {};
         $scope.profileInfo = {};
         $scope.friends = {};
+        sessionStorage.removeItem("userWebid");
         
         //redirect to the login page
         setTimeout( function() {
@@ -210,24 +261,35 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 
 				fetchMyInfo(fetchProfInfoRetrials++ < MAX_TRIALS);
 
-				showFriendsList();
-
 				alreadyDone = true;
 			}
 
-			console.log("user's pod is " + storage);
+			// periodically check whether posts are changed to display them.
+			setInterval( renderChanges , 1000);
 		})
 		.catch(function (errorCode) {	//failure
 			console.log("Error retrieveing storage code " + errorCode);
 		});
 
-	 
+	var renderChanges = function () {
 
-	console.log(me.webid);
+		if ( postsChanged )
+		{
+			orderMessages();
+			$scope.$apply();
+			postsChanged = false ;
 
+			$window.scrollTo(0,document.body.scrollHeight);
+		}
+
+		if( friendsListChanged )
+		{
+			showFriendsList();
+			friendsListChanged = false;
+		}
+	};
 
 	var startChat = function (webid) {
-		console.log("Start Chat with " + webid);
 
 		if ( webid === $scope.currentChatWebid )
 			return;
@@ -249,7 +311,7 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 
 			setTimeout(function () {
 				showMessageLoading(false);
-			} , 2000);
+			} , 1000);
 
 			other.notifications = 0;
 			$scope.$apply();
@@ -265,24 +327,9 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 		.catch( function (error) {
 			showMessageLoading(false);
 		});
-
-		// periodically check whether posts are changed to display them.
-		setInterval( displayPosts , 1000);
 	};
 
 	$scope.startChat = startChat;
-
-	var displayPosts = function () {
-
-		if ( postsChanged )
-		{
-			orderMessages();
-			$scope.$apply();
-			postsChanged = false ;
-
-			$window.scrollTo(0,document.body.scrollHeight);
-		}
-	};
 
 	var startChatUIUpdate = function (webid) {
 
@@ -316,6 +363,11 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 
 		postsChanged = true;
 	};
+
+	var setLastSeenPost = function(timestamp)
+	{
+		chatHandler.setLastSeen($scope.currentChatWebid , timestamp);
+	}
 
 	$scope.bindMessages = bindMessages;
 

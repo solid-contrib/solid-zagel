@@ -27,6 +27,7 @@ function ChatHandler(scopeObject)
 	this.activeContainers.notifications = "Chat/Notifications";
 	this.notifications = [];
 	this.currentChat = {};
+	this.updateNotificationsCount = 0;
 	
 	this.setupWebsocket();
 	// this.connectToSocket(this.entity.websocket , this.entity.storage + "Public/Chat/Notifications/");
@@ -538,8 +539,8 @@ ChatHandler.prototype.readPosts = function(thread , lastPostRead)
 			var posts = graph.statementsMatching(undefined, RDF('type'), CHAT('Post'));
 
 
-            if ( stmts.length > 0 )
-            	that.parsePosts(stmts);
+            if ( posts.length > 0 )
+            	that.parsePosts(posts);
 		})
 		.catch(function(err){
 
@@ -616,6 +617,115 @@ ChatHandler.prototype.loadPost = function(postURL) {
 	});
 
 	return promise;
+};
+
+ChatHandler.prototype.updateNotifications = function(friends) {
+
+	var that = this;
+
+	var promise = new Promise ( function ( resolve , reject) {
+
+		if ( that.updateNotificationsCount === 0 )
+		{
+			var notifications = {};
+
+			for ( var key in friends)
+			{
+				that.getNotificationsForFriend(key).then(
+				function(notification){
+
+					notifications[notification.webid] = notification.count;
+
+					if ( --(that.updateNotificationsCount) === 0 )
+						resolve(notifications);
+				})
+				.catch(function(err){
+					
+					if (--(that.updateNotificationsCount) === 0 )
+						resolve(notifications);
+				});
+			}
+		}
+		else
+			reject("ongoing update");
+	});
+
+	return promise;
+};
+
+ChatHandler.prototype.getNotificationsForFriend = function(webid) {
+
+	var that = this;
+	var lastTimestamp = undefined;
+
+	var promise = new Promise( function (resolve , reject) {
+
+		var containerName = that.getContainerNameForChat([that.entity.webid , webid]);
+		var url = that.entity.storage + "Chat/" + containerName + "/*";
+		Solid.get(url).then(
+			function(graph){
+				var posts = graph.statementsMatching(undefined, RDF('type'), CHAT('Post'));
+
+				posts.forEach(function(item) {
+					that.loadPost(removeDuplicateSlashInURL(item.subject.uri)).then(
+						function( post )
+						{
+							
+						})
+					.catch( function(err)
+					{
+						console.log("can't load posts");
+					});
+				});
+		})
+		.catch(function(err){
+
+		});
+	});
+
+	return promise;
+};
+
+ChatHandler.prototype.setLastSeen = function(friend , timestamp , resourceName) {
+
+	var containerName = this.getContainerNameForChat([this.entity.webid , friend]);
+	containerName = this.entity.storage + "Chat/" + containerName + "/";
+	var data = '@prefix ldchat: ' + CHAT_NAMESPACE + '.\n\n' +
+				'<> a ldchat:chatMetadata;\n' +
+		    	'ldchat:resourceName \"' + resourceName + '\" ;\n' +
+				'ldchat:lastSeen \"' + timestamp + '\";';
+
+	Solid.web.create(containerName , data , "lastSeen").then(
+	function(meta) {
+		
+	}).catch(function(err) {
+		
+	});	
+};
+
+ChatHandler.prototype.getLastSeen = function(friend) {
+
+	var that = this;
+
+	var promise = new Promise( function( resolve , reject) {
+
+		var containerName = this.getContainerNameForChat([this.entity.webid , friend]);
+		var resName = this.entity.storage + "Chat/" + containerName + "/lastSeen";
+
+		Solid.web.get(resName).then(
+		function(graph) {
+			var stmt = graph.any($rdf.sym(resName) , CHAT('lastSeen') , undefined);
+
+			if ( stmt )
+				resolve(stmt.object.value);
+			else
+				reject("can't read last seen value from metadata file");
+		}).catch(function(err) {
+				reject("can't find last seen metadata file");
+		});
+	});
+
+	return promise;	
 };
 
 ChatHandler.prototype.wipeContainer = function(container) {

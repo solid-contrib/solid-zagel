@@ -30,6 +30,7 @@ app.controller('SigninController', function($scope, $window, $location, sharedPr
 
 	      // console.log(webid);
 	      sharedProperties.getUserInfo().webid = webid;
+	      sessionStorage.setItem("userWebid" , webid);
 	      // $scope.$apply(function() {
 	      // 	$('#signin-success-alert').fadeIn();
 	      // 	$scope.signinResultText = "Signed in as " + webid;
