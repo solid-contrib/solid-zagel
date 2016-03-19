@@ -242,6 +242,10 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 			$scope.posts = [];
 		});
 
+		messagesArray = [];
+		messagesObject = {};
+		$scope.posts = [];
+
 		//send chat init request
 		showMessageLoading(true);
 
@@ -297,7 +301,7 @@ app.controller('ChathomeController', function($scope, $location , $window , shar
 		// if the number of posts retrieved from the server is the same as the ones already bound,
 		// this means no need to rebind as this update because of pushing my own message into my pod.
 		// this message is already added before sending it to the pod
-		if ( postsList.length <= $scope.posts.length )
+		if ( postsList.length <= messagesArray.length )
 			return ;
 
 		for ( var i in postsList)

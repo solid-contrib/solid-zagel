@@ -272,16 +272,21 @@ ChatHandler.prototype.sendNotification = function(container , type , data)
 	var promise = new Promise(function ( resolve , reject ) {
 
 		var timestamp = Date.now();
-		var content = '@prefix ldchat: ' + CHAT_NAMESPACE + '.\n\n' +
-					'<> a ldchat:Notification;\n' +
-			    	'ldchat:notificationType ldchat:' + type + ' ;\n' +
-			    	'ldchat:sender <' + that.entity.webid + '>;\n'+
-			    	'ldchat:threadContainer \"' + data + '\";\n' +
-					'ldchat:time \"' + timestamp + '\";';
+		// var content = '@prefix ldchat: ' + CHAT_NAMESPACE + '.\n\n' +
+		// 			'<> a ldchat:Notification;\n' +
+		// 	    	'ldchat:notificationType ldchat:' + type + ' ;\n' +
+		// 	    	'ldchat:sender <' + that.entity.webid + '>;\n'+
+		// 	    	'ldchat:threadContainer \"' + data + '\";\n' +
+		// 			'ldchat:time \"' + timestamp + '\".';
+		var content ='<> a <http://w3c.org/linkeddata/chat/ns#Notification>;\n' +
+			    	'<http://w3c.org/linkeddata/chat/ns#notificationType> <http://w3c.org/linkeddata/chat/ns#' + type + '>;\n' +
+			    	'<http://w3c.org/linkeddata/chat/ns#sender> <' + that.entity.webid + '>;\n'+
+			    	'<http://w3c.org/linkeddata/chat/ns#threadContainer> \"' + data + '\";\n' +
+					'<http://w3c.org/linkeddata/chat/ns#time> \"' + timestamp + '\".';
 
 
 
-		Solid.web.create(container , content , type).then(
+		Solid.web.put(container , content , type).then(
 			function(meta) {
 				console.log("resource created " + meta.url);
 				resolve(meta);
